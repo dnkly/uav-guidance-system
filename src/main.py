@@ -1,29 +1,39 @@
 import libevdev
-import simulator
-import config
+import logging
+from config import CONTROLLER_PATH, SIMULATOR_HOST, SIMULATOR_PORT
+from simulator import Simulator
 
 
 def main():
+    simulator = Simulator(SIMULATOR_HOST, SIMULATOR_PORT)
+
     try:
-        with open(config.DEVICE_PATH) as fd:
-            device = libevdev.Device(fd)
+        with open(CONTROLLER_PATH) as fd:
+            controller = libevdev.Device(fd)
+
+            logging.info(f"Simulator: {SIMULATOR_HOST}:{SIMULATOR_PORT}")
+            logging.info(f"Controller: {controller.name}")
+            logging.info("Listening to controller events...")
 
             while True:
-                process_events(device)
+                for event in controller.events():
+                    process_event(event, simulator)
     except KeyboardInterrupt:
         pass
     except Exception as error:
-        print(f"Error: {error}")
+        logging.error(error)
     finally:
         simulator.close()
 
 
-def process_events(device: libevdev.Device):
-    for event in device.events():
-        if not event.matches(libevdev.EV_ABS):
-            continue
+def process_event(
+    event: libevdev.InputEvent,
+    simulator: Simulator,
+):
+    if not event.matches(libevdev.EV_ABS):
+        return
 
-        simulator.send_event(event)
+    simulator.send_event(event)
 
 
 if __name__ == "__main__":

@@ -1,63 +1,46 @@
-import libevdev
 import socket
+import logging
 import json
-
-
-UDP_HOST = "127.0.0.1"
-UDP_PORT = 8888
+from config import CommandType, CONTROLLER_NAME, SIMULATOR_HOST, SIMULATOR_PORT
+from controller import VirtualController
 
 
 def main():
     server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    server.bind((UDP_HOST, UDP_PORT))
+    controller = VirtualController(CONTROLLER_NAME)
 
     try:
-        device = create_device()
+        server.bind((SIMULATOR_HOST, SIMULATOR_PORT))
+
+        logging.info(f"Server: {SIMULATOR_HOST}:{SIMULATOR_PORT}")
+        logging.info(f"Controller: {CONTROLLER_NAME}")
+        logging.info("Listening to guidance system commands...")
 
         while True:
-            message, _ = server.recvfrom(1024)
-            data = json.loads(message.decode())
-
-            if data["type"] == 0:
-                handle_device_event(device, data["payload"])
+            buffer, _ = server.recvfrom(1024)
+            command = json.loads(buffer.decode())
+            process_command(command, controller)
     except KeyboardInterrupt:
         pass
     except Exception as error:
-        print(f"Error: {error}")
+        logging.error(error)
     finally:
         server.close()
 
 
-def create_device():
-    device = libevdev.Device()
-    device.name = "Virtual RadioMaster TX12"
+def process_command(
+    command: dict,
+    controller: VirtualController,
+):
+    command_type = CommandType(command["type"])
 
-    def create_absinfo(value: int):
-        return libevdev.InputAbsInfo(0, 2047, 7, 127, 0, value)
-
-    device.enable(libevdev.EV_ABS.ABS_X, create_absinfo(1023))
-    device.enable(libevdev.EV_ABS.ABS_Y, create_absinfo(1023))
-    device.enable(libevdev.EV_ABS.ABS_Z, create_absinfo(0))
-
-    device.enable(libevdev.EV_ABS.ABS_RX, create_absinfo(1023))
-    device.enable(libevdev.EV_ABS.ABS_RY, create_absinfo(0))
-    device.enable(libevdev.EV_ABS.ABS_RZ, create_absinfo(1023))
-
-    device.enable(libevdev.EV_ABS.ABS_THROTTLE, create_absinfo(1023))
-    device.enable(libevdev.EV_KEY.BTN_START)
-
-    uinput = device.create_uinput_device()
-    return uinput
-
-
-def handle_device_event(device: libevdev.Device, payload):
-    code = libevdev.evbit(payload["type"], payload["code"])
-    value = payload["value"]
-
-    device.send_events([
-        libevdev.InputEvent(code, value),
-        libevdev.InputEvent(libevdev.EV_SYN.SYN_REPORT, 0)
-    ])
+    match command_type:
+        case CommandType.SEND_EVENT:
+            controller.send_event(command["payload"])
+        case CommandType.UPDATE_TARGET:
+            pass
+        case CommandType.RESET_TARGET:
+            pass
 
 
 if __name__ == "__main__":

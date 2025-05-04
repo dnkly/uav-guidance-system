@@ -11,7 +11,7 @@ class CommandType(Enum):
     UPDATE_TARGET = 1
     RESET_TARGET = 2
 
-CONTROLLER_PATH = "/dev/input/event22"
+CONTROLLER_NAME = "Virtual RadioMaster TX12"
 
 SIMULATOR_HOST = "127.0.0.1"
 SIMULATOR_PORT = 8888
