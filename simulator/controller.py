@@ -7,7 +7,7 @@ class VirtualController:
         device.name = name
 
         self._configure_device(device)
-        self.uinput = device.create_uinput_device()
+        self._uinput = device.create_uinput_device()
 
     def _configure_device(self, device):
         def create_absinfo(value):
@@ -28,7 +28,7 @@ class VirtualController:
         code = libevdev.evbit(event["type"], event["code"])
         value = event["value"]
 
-        self.uinput.send_events([
+        self._uinput.send_events([
             libevdev.InputEvent(code, value),
             libevdev.InputEvent(libevdev.EV_SYN.SYN_REPORT, 0),
         ])
