@@ -14,4 +14,4 @@ class CommandType(Enum):
 CONTROLLER_PATH = "/dev/input/event22"
 
 SIMULATOR_HOST = "127.0.0.1"
-SIMULATOR_PORT = 8888
+SIMULATOR_PORT = 9001

@@ -1,8 +1,13 @@
 import socket
 import logging
 import json
-from config import CommandType, CONTROLLER_NAME, SIMULATOR_HOST, SIMULATOR_PORT
 from controller import VirtualController
+from config import (
+    CommandType,
+    CONTROLLER_NAME,
+    SIMULATOR_HOST,
+    SIMULATOR_PORT,
+)
 
 
 def main():
@@ -28,10 +33,7 @@ def main():
         server.close()
 
 
-def process_command(
-    command: dict,
-    controller: VirtualController,
-):
+def process_command(command, controller):
     command_type = CommandType(command["type"])
 
     match command_type:

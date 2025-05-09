@@ -14,4 +14,4 @@ class CommandType(Enum):
 CONTROLLER_NAME = "Virtual RadioMaster TX12"
 
 SIMULATOR_HOST = "127.0.0.1"
-SIMULATOR_PORT = 8888
+SIMULATOR_PORT = 9001

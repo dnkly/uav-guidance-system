@@ -2,15 +2,15 @@ import libevdev
 
 
 class VirtualController:
-    def __init__(self, name: str):
+    def __init__(self, name):
         device = libevdev.Device()
         device.name = name
 
         self._configure_device(device)
         self.uinput = device.create_uinput_device()
 
-    def _configure_device(self, device: libevdev.Device):
-        def create_absinfo(value: int):
+    def _configure_device(self, device):
+        def create_absinfo(value):
             return libevdev.InputAbsInfo(0, 2047, 7, 127, 0, value)
 
         device.enable(libevdev.EV_ABS.ABS_X, create_absinfo(1023))

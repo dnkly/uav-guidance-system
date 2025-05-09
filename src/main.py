@@ -1,7 +1,11 @@
 import libevdev
 import logging
-from config import CONTROLLER_PATH, SIMULATOR_HOST, SIMULATOR_PORT
 from simulator import Simulator
+from config import (
+    CONTROLLER_PATH,
+    SIMULATOR_HOST,
+    SIMULATOR_PORT,
+)
 
 
 def main():
@@ -26,10 +30,7 @@ def main():
         simulator.close()
 
 
-def process_event(
-    event: libevdev.InputEvent,
-    simulator: Simulator,
-):
+def process_event(event, simulator):
     if not event.matches(libevdev.EV_ABS):
         return
 

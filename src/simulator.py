@@ -1,11 +1,10 @@
 import socket
-import libevdev
 import json
 from config import CommandType
 
 
 class Simulator:
-    def __init__(self, host: str, port: int):
+    def __init__(self, host, port):
         self._client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._client.connect((host, port))
 
@@ -16,7 +15,7 @@ class Simulator:
         buffer = json.dumps(data).encode()
         self._client.send(buffer)
 
-    def send_event(self, event: libevdev.InputEvent):
+    def send_event(self, event):
         self._send({
             "type": CommandType.SEND_EVENT.value,
             "payload": {
@@ -26,12 +25,12 @@ class Simulator:
             },
         })
 
-    def update_target(self, x: int, y: int):
+    def update_target(self, target):
         self._send({
             "type": CommandType.UPDATE_TARGET.value,
             "payload": {
-                "x": x,
-                "y": y
+                "x": target["x"],
+                "y": target["y"],
             },
         })
 
