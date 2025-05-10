@@ -31,7 +31,10 @@ def main():
 
 
 def process_event(event, simulator):
-    if not event.matches(libevdev.EV_ABS):
+    is_abs = event.matches(libevdev.EV_ABS)
+    is_key = event.matches(libevdev.EV_KEY)
+
+    if not is_abs and not is_key:
         return
 
     simulator.send_event(event)

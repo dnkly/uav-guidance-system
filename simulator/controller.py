@@ -13,16 +13,13 @@ class VirtualController:
         def create_absinfo(value):
             return libevdev.InputAbsInfo(0, 2047, 7, 127, 0, value)
 
-        device.enable(libevdev.EV_ABS.ABS_X, create_absinfo(1023))
-        device.enable(libevdev.EV_ABS.ABS_Y, create_absinfo(1023))
+        device.enable(libevdev.EV_ABS.ABS_X, create_absinfo(1024))
+        device.enable(libevdev.EV_ABS.ABS_Y, create_absinfo(1024))
         device.enable(libevdev.EV_ABS.ABS_Z, create_absinfo(0))
 
-        device.enable(libevdev.EV_ABS.ABS_RX, create_absinfo(1023))
-        device.enable(libevdev.EV_ABS.ABS_RY, create_absinfo(0))
-        device.enable(libevdev.EV_ABS.ABS_RZ, create_absinfo(1023))
-
-        device.enable(libevdev.EV_ABS.ABS_THROTTLE, create_absinfo(1023))
-        device.enable(libevdev.EV_KEY.BTN_START)
+        device.enable(libevdev.EV_ABS.ABS_RX, create_absinfo(1024))
+        device.enable(libevdev.EV_ABS.ABS_RY, create_absinfo(1024))
+        device.enable(libevdev.EV_KEY.BTN_TL)
 
     def send_event(self, event):
         code = libevdev.evbit(event["type"], event["code"])

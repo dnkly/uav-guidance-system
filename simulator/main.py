@@ -42,12 +42,15 @@ def main():
 
 def process_command(command, camera, controller):
     command_type = CommandType(command["type"])
+    payload = command["payload"]
 
     match command_type:
         case CommandType.SEND_EVENT:
-            controller.send_event(command["payload"])
+            controller.send_event(payload)
+        case CommandType.UPDATE_RETICLE_SIZE:
+            camera.update_reticle_size(payload)
         case CommandType.UPDATE_TARGET:
-            camera.update_target()
+            camera.update_target(payload)
         case CommandType.RESET_TARGET:
             camera.reset_target()
 

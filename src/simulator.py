@@ -11,28 +11,30 @@ class Simulator:
     def close(self):
         self._client.close()
 
-    def _send(self, data):
-        buffer = json.dumps(data).encode()
+    def _send(self, type, payload = None):
+        buffer = json.dumps({
+            "type": type.value,
+            "payload": payload,
+        }).encode()
+
         self._client.send(buffer)
 
     def send_event(self, event):
-        self._send({
-            "type": CommandType.SEND_EVENT.value,
-            "payload": {
-                "type": event.type.value,
-                "code": event.code.value,
-                "value": event.value,
-            },
+        self._send(CommandType.SEND_EVENT, {
+            "type": event.type.value,
+            "code": event.code.value,
+            "value": event.value,
         })
 
+    def update_reticle_size(self, size):
+        self._send(CommandType.UPDATE_RETICLE_SIZE, size)
+
     def update_target(self, target):
-        self._send({
-            "type": CommandType.UPDATE_TARGET.value,
-            "payload": {
-                "x": target["x"],
-                "y": target["y"],
-            },
+        self._send(CommandType.UPDATE_TARGET, {
+            "x": target["x"],
+            "y": target["y"],
+            "size": target["size"],
         })
 
     def reset_target(self):
-        self._send({ "type": CommandType.RESET_TARGET.value })
+        self._send(CommandType.RESET_TARGET)
