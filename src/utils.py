@@ -220,10 +220,10 @@ def extract_subimage(image, center, width, height, target_size, angle=0.0):
     right = left + width
     bottom = top + height
 
-    left = np.max(0, left)
-    top = np.max(0, top)
-    right = np.min(image_width, right)
-    bottom = np.min(image_height, bottom)
+    left = max(0, left)
+    top = max(0, top)
+    right = min(image_width, right)
+    bottom = min(image_height, bottom)
 
     channels = 1
     output_shape = None

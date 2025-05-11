@@ -1,28 +1,32 @@
 import libevdev
 import logging
+from camera import VirtualCamera
 from simulator import Simulator
 from tracker import IncrementalTracker
 from config import (
     SystemState,
+    CONTROLLER_NAME,
     CONTROLLER_PATH,
-    SIMULATOR_HOST,
-    SIMULATOR_PORT,
+    VIDEO_STREAM_URL,
+    WINDOW_NAME,
     TRACKER_CONFIG,
 )
 
 
 def main():
-    simulator = Simulator(SIMULATOR_HOST, SIMULATOR_PORT)
-    tracker = IncrementalTracker(simulator, TRACKER_CONFIG)
+    camera = VirtualCamera(VIDEO_STREAM_URL)
+    simulator = Simulator(camera, CONTROLLER_NAME, WINDOW_NAME)
+    tracker = IncrementalTracker(camera, simulator, TRACKER_CONFIG)
 
     try:
+        camera.run()
+        simulator.run()
         tracker.run()
 
         with open(CONTROLLER_PATH) as fd:
             controller = libevdev.Device(fd)
 
-            logging.info(f"Simulator: {SIMULATOR_HOST}:{SIMULATOR_PORT}")
-            logging.info(f"Camera: {TRACKER_CONFIG["STREAM_URL"]}")
+            logging.info(f"Camera: {VIDEO_STREAM_URL}")
             logging.info(f"Controller: {controller.name}")
             logging.info("Listening to controller events...")
 
@@ -35,7 +39,7 @@ def main():
         logging.error(error)
     finally:
         tracker.stop()
-        simulator.close()
+        simulator.stop()
 
 
 def process_event(event, simulator, tracker):
@@ -56,7 +60,7 @@ def process_event(event, simulator, tracker):
             case SystemState.AUTOPILOT:
                 pass
     elif event.matches(libevdev.EV_ABS.ABS_THROTTLE):
-        size = event.value // 30
+        size = event.value // 20
         tracker.update_initial_box(size)
         simulator.update_reticle_size(size)
     else:

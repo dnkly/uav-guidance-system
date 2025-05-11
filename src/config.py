@@ -9,29 +9,20 @@ logging.basicConfig(
 )
 
 
-class CommandType(Enum):
-    SEND_EVENT = 0
-    UPDATE_RETICLE_SIZE = 1
-    UPDATE_TARGET = 2
-    RESET_TARGET = 3
-
-
 class SystemState(Enum):
     STANDBY = 0
     TRACKING = 1024
     AUTOPILOT = 2047
 
 
-CONTROLLER_PATH = "/dev/input/event15"
+CONTROLLER_NAME = "Virtual RadioMaster TX12"
+CONTROLLER_PATH = "/dev/input/event22"
 
-SIMULATOR_HOST = "127.0.0.1"
-SIMULATOR_PORT = 9001
+VIDEO_STREAM_URL = "udp://127.0.0.1:9000"
+WINDOW_NAME = "UAV Guidance System"
 
 
 TRACKER_CONFIG = {
-    # STREAM_URL.
-    "STREAM_URL": "udp://127.0.0.1:9000",
-
     # NPARTICLES. The number of particles used in the condensation
     # algorithm/particle filter.  Increasing this will likely improve the
     # results, but make the tracker slower.

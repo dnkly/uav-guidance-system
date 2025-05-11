@@ -22,10 +22,5 @@ class VirtualController:
         device.enable(libevdev.EV_KEY.BTN_TL)
 
     def send_event(self, event):
-        code = libevdev.evbit(event["type"], event["code"])
-        value = event["value"]
-
-        self._uinput.send_events([
-            libevdev.InputEvent(code, value),
-            libevdev.InputEvent(libevdev.EV_SYN.SYN_REPORT, 0),
-        ])
+        syn_report = libevdev.InputEvent(libevdev.EV_SYN.SYN_REPORT, 0)
+        self._uinput.send_events([event, syn_report])

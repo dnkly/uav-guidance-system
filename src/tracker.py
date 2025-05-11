@@ -10,10 +10,10 @@ from utils import (
 
 
 class IncrementalTracker:
-    def __init__(self, simulator, config):
+    def __init__(self, camera, simulator, config):
+        self._camera = camera
         self._simulator = simulator
 
-        self._stream_url = config["STREAM_URL"]
         self._nparticles = config["NPARTICLES"]
         self._condenssig = config["CONDENSSIG"]
         self._forgetting = config["FORGETTING"]
@@ -24,37 +24,14 @@ class IncrementalTracker:
         self._template_dimension = template_size * template_size
 
         self._max_basis = config["MAX_BASIS"]
-        self._resize_rate = config["RESIZE_RATE"]
         self._affsig = np.asarray(config["AFFSIG"], dtype=np.float32)
 
-        self._capture = cv2.VideoCapture()
         self._lock = threading.Lock()
         self._is_running = threading.Event()
         self._is_tracking = threading.Event()
 
         self._initial_box = None
-        self._warped_images = []
-
-        self._params = {
-            "conf": np.full(
-                self._nparticles,
-                1.0 / self._nparticles,
-                dtype=np.float32,
-            )
-        }
-
-        self._template = {
-            "mean": np.zeros(self._template_dimension, dtype=np.float32),
-            "basis": np.zeros((self._template_dimension, 0), dtype=np.float32),
-            "eigval": np.array([], dtype=np.float32),
-            "nsamples": 0,
-            "reseig": 0,
-        }
-
-        self._diff = np.zeros(
-            (self._template_dimension, self._nparticles),
-            dtype=np.float32,
-        )
+        self._reset_params()
 
     def run(self):
         thread = threading.Thread(target=self._run)
@@ -62,35 +39,40 @@ class IncrementalTracker:
 
     def _run(self):
         try:
-            self._capture.open(self._stream_url, cv2.CAP_FFMPEG)
             self._create_initial_box()
             self._is_running.set()
 
             while self._is_running.is_set():
-                self._capture.grab()
+                self._is_tracking.wait()
+                frame = self._camera.read()
 
-                if not self._is_tracking.is_set():
+                if frame is None:
                     continue
 
-                ret, frame = self._capture.retrieve()
-                est = self._track(frame)
+                with self._lock:
+                    est = self._track(frame)
+
+                self._is_tracking.wait()
+
+                est_x = est[0]
+                est_y = est[1]
+                est_width = est[2] * self._template_shape[0]
+                est_height = est_width * est[3]
+
+                target_size = min(est_width, est_height)
 
                 self._simulator.update_target({
-                    "x": est[0],
-                    "y": est[1],
-                    "size": 20,
+                    "x": int(est_x),
+                    "y": int(est_y),
+                    "size": int(target_size),
                 })
-
-                if not ret:
-                    break
         except Exception as error:
             logging.error(error)
         finally:
             self.stop()
 
     def _create_initial_box(self):
-        width = int(self._capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(self._capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        width, height = self._camera.get_dimensions()
 
         self._initial_box = {
             "x": width // 2,
@@ -99,7 +81,7 @@ class IncrementalTracker:
         }
 
     def init(self):
-        if self._is_running.is_set():
+        if self._is_tracking.is_set():
             return
 
         if self._initial_box is None:
@@ -113,9 +95,9 @@ class IncrementalTracker:
         initial_params[2] = self._initial_box["size"] / self._template_shape[0]
         initial_params[3] = 1.0
 
-        ret, frame = self._capture.retrieve()
+        frame = self._camera.read()
 
-        if not ret:
+        if frame is None:
             return
 
         grayscale_image = self._normalize_grayscale(frame)
@@ -232,15 +214,41 @@ class IncrementalTracker:
         self._template["nsamples"] = nsamples
 
     def update_initial_box(self, size):
-        self._initial_box["size"] = size * 2
+        self._initial_box["size"] = size
 
     def reset(self):
         self._is_tracking.clear()
-        self._simulator.reset_target()
+        self._simulator.update_target(None)
+
+        with self._lock:
+            self._reset_params()
+
+    def _reset_params(self):
+        self._warped_images = []
+
+        self._params = {
+            "conf": np.full(
+                self._nparticles,
+                1.0 / self._nparticles,
+                dtype=np.float32,
+            )
+        }
+
+        self._template = {
+            "mean": np.zeros(self._template_dimension, dtype=np.float32),
+            "basis": np.zeros((self._template_dimension, 0), dtype=np.float32),
+            "eigval": np.array([], dtype=np.float32),
+            "nsamples": 0,
+            "reseig": 0,
+        }
+
+        self._diff = np.zeros(
+            (self._template_dimension, self._nparticles),
+            dtype=np.float32,
+        )
 
     def stop(self):
         if not self._is_running.is_set():
             return
 
         self._is_running.clear()
-        self._capture.release()
