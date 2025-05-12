@@ -16,9 +16,11 @@ class SystemState(Enum):
 
 
 CONTROLLER_NAME = "Virtual RadioMaster TX12"
-CONTROLLER_PATH = "/dev/input/event22"
+CONTROLLER_PATH = "/dev/input/event15"
 
-VIDEO_STREAM_URL = "udp://127.0.0.1:9000"
+VIDEO_STREAM_URL = "udp://127.0.0.1:9000?timeout=60000000"
+VIDEO_RESOLUTION = (1600, 900)
+
 WINDOW_NAME = "UAV Guidance System"
 
 

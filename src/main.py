@@ -8,13 +8,14 @@ from config import (
     CONTROLLER_NAME,
     CONTROLLER_PATH,
     VIDEO_STREAM_URL,
+    VIDEO_RESOLUTION,
     WINDOW_NAME,
     TRACKER_CONFIG,
 )
 
 
 def main():
-    camera = VirtualCamera(VIDEO_STREAM_URL)
+    camera = VirtualCamera(VIDEO_STREAM_URL, VIDEO_RESOLUTION)
     simulator = Simulator(camera, CONTROLLER_NAME, WINDOW_NAME)
     tracker = IncrementalTracker(camera, simulator, TRACKER_CONFIG)
 
@@ -40,6 +41,7 @@ def main():
     finally:
         tracker.stop()
         simulator.stop()
+        camera.stop()
 
 
 def process_event(event, simulator, tracker):

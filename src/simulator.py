@@ -1,4 +1,5 @@
 import cv2
+import time
 import logging
 import threading
 from controller import VirtualController
@@ -8,6 +9,7 @@ class Simulator:
     def __init__(self, camera, controller_name, window_name):
         self._camera = camera
         self._window_name = window_name
+        self._frame_time = 1 / 60
 
         self._controller = VirtualController(controller_name)
         self._lock = threading.Lock()
@@ -32,6 +34,11 @@ class Simulator:
             self._is_running.set()
 
             while self._is_running.is_set():
+                start_time = time.time()
+
+                if cv2.waitKey(1) == ord("q"):
+                    break
+
                 frame = self._camera.read()
 
                 if frame is None:
@@ -40,15 +47,18 @@ class Simulator:
                 self._draw_overlay(frame)
                 cv2.imshow(self._window_name, frame)
 
-                if cv2.waitKey(1) == ord("q"):
-                    break
+                duration = time.time() - start_time
+                sleep_time = self._frame_time - duration
+
+                if sleep_time > 0:
+                    time.sleep(sleep_time)
         except Exception as error:
             logging.error(error)
         finally:
             self.stop()
 
     def _create_window(self):
-        width, height = self._camera.get_dimensions()
+        width, height = self._camera.get_resolution()
 
         cv2.namedWindow(self._window_name, cv2.WINDOW_GUI_NORMAL)
         cv2.resizeWindow(self._window_name, width, height)

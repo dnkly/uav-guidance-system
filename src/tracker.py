@@ -44,35 +44,22 @@ class IncrementalTracker:
 
             while self._is_running.is_set():
                 self._is_tracking.wait()
-                frame = self._camera.read()
-
-                if frame is None:
-                    continue
 
                 with self._lock:
+                    frame = self._camera.read()
+
+                    if frame is None:
+                        continue
+
                     est = self._track(frame)
-
-                self._is_tracking.wait()
-
-                est_x = est[0]
-                est_y = est[1]
-                est_width = est[2] * self._template_shape[0]
-                est_height = est_width * est[3]
-
-                target_size = min(est_width, est_height)
-
-                self._simulator.update_target({
-                    "x": int(est_x),
-                    "y": int(est_y),
-                    "size": int(target_size),
-                })
+                    self._update_target(est)
         except Exception as error:
             logging.error(error)
         finally:
             self.stop()
 
     def _create_initial_box(self):
-        width, height = self._camera.get_dimensions()
+        width, height = self._camera.get_resolution()
 
         self._initial_box = {
             "x": width // 2,
@@ -213,15 +200,27 @@ class IncrementalTracker:
         self._template["mean"] = mean
         self._template["nsamples"] = nsamples
 
+    def _update_target(self, est):
+        est_width = est[2] * self._template_shape[0]
+        est_height = est_width * est[3]
+
+        target_size = min(est_width, est_height)
+
+        self._simulator.update_target({
+            "x": int(est[0]),
+            "y": int(est[1]),
+            "size": int(target_size),
+        })
+
     def update_initial_box(self, size):
         self._initial_box["size"] = size
 
     def reset(self):
         self._is_tracking.clear()
-        self._simulator.update_target(None)
 
         with self._lock:
             self._reset_params()
+            self._simulator.update_target(None)
 
     def _reset_params(self):
         self._warped_images = []
@@ -252,3 +251,4 @@ class IncrementalTracker:
             return
 
         self._is_running.clear()
+        self.reset()
