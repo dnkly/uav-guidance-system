@@ -26,7 +26,7 @@ class VirtualCamera:
         ]
 
     def run(self):
-        thread = threading.Thread(target=self._run)
+        thread = threading.Thread(target=self._run, daemon=True)
         thread.start()
 
     def _run(self):

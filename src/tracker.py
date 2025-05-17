@@ -10,9 +10,10 @@ from utils import (
 
 
 class IncrementalTracker:
-    def __init__(self, camera, simulator, config):
+    def __init__(self, camera, simulator, autopilot, config):
         self._camera = camera
         self._simulator = simulator
+        self._autopilot = autopilot
 
         self._nparticles = config["NPARTICLES"]
         self._condenssig = config["CONDENSSIG"]
@@ -34,7 +35,7 @@ class IncrementalTracker:
         self._reset_params()
 
     def run(self):
-        thread = threading.Thread(target=self._run)
+        thread = threading.Thread(target=self._run, daemon=True)
         thread.start()
 
     def _run(self):
@@ -143,6 +144,9 @@ class IncrementalTracker:
                     random_samples[i],
                 )
 
+                if cdf_indices[i] == self._nparticles:
+                    cdf_indices[i] -= 1
+
             self._params["param"] = self._params["param"][cdf_indices]
 
         self._params["param"] = np.random.normal(self._params["param"], self._affsig)
@@ -206,11 +210,14 @@ class IncrementalTracker:
 
         target_size = min(est_width, est_height)
 
-        self._simulator.update_target({
+        target = {
             "x": int(est[0]),
             "y": int(est[1]),
             "size": int(target_size),
-        })
+        }
+
+        self._simulator.update_target(target)
+        self._autopilot.update_target(target)
 
     def update_initial_box(self, size):
         self._initial_box["size"] = size
