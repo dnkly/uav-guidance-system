@@ -2,6 +2,7 @@
 
 A guidance and automatic target engagement system for FPV drones.
 At this stage, the system has been developed to operate within a **simulator**.
+Watch video examples: [static target](examples/static-target.mp4) and [dynamic target](examples/dynamic-target.mp4).
 
 ## Requirements
 
